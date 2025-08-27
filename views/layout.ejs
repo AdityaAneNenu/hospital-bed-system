@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real-time hospital bed and oxygen cylinder availability tracking system">
+    <meta name="keywords" content="hospital, healthcare, bed availability, oxygen, emergency">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- External Libraries -->
+    <% if (typeof includeMap !== 'undefined' && includeMap) { %>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <% } %>
+    
+    <!-- Supabase -->
+    <script type="module" src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Configuration -->
+    <script>
+        window.APP_CONFIG = {
+            supabase: {
+                url: '<%= SUPABASE_URL %>',
+                anonKey: '<%= SUPABASE_ANON_KEY %>'
+            },
+            api: {
+                baseUrl: '/api'
+            }
+        };
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <%- include('partials/navbar') %>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <%- body %>
+    </main>
+    
+    <!-- Footer -->
+    <%- include('partials/footer') %>
+    
+    <!-- Scripts -->
+    <script src="/js/common.js"></script>
+    <% if (typeof scripts !== 'undefined') { %>
+        <% scripts.forEach(script => { %>
+            <script src="/js/<%= script %>"></script>
+        <% }); %>
+    <% } %>
+</body>
+</html>
