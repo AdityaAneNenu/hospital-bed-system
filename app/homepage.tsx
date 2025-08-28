@@ -13,7 +13,7 @@ export default function HomePage() {
             <div className="flex items-center space-x-2">
               <Activity className="h-8 w-8 text-blue-600" />
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                MedTracker
+                Smart Med Tracker
               </span>
             </div>
             
@@ -83,7 +83,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Why Choose <span className="text-blue-600">MedTracker</span>?
+              Why Choose <span className="text-blue-600">Smart Med Tracker</span>?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Our platform provides the most accurate and up-to-date information about hospital availability
@@ -132,7 +132,7 @@ export default function HomePage() {
             Ready to Get Started?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of healthcare professionals using MedTracker to save lives
+            Join thousands of healthcare professionals using Smart Med Tracker to save lives
           </p>
           <Link 
             href="/auth?mode=signup" 
@@ -151,7 +151,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Activity className="h-6 w-6 text-blue-400" />
-                <span className="text-xl font-bold">MedTracker</span>
+                <span className="text-xl font-bold">Smart Med Tracker</span>
               </div>
               <p className="text-gray-400">
                 Connecting patients with healthcare facilities through real-time bed availability tracking.
@@ -183,7 +183,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 MedTracker. All rights reserved.</p>
+            <p>&copy; 2025 Smart Med Tracker. All rights reserved.</p>
           </div>
         </div>
       </footer>

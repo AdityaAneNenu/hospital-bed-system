@@ -1,4 +1,4 @@
-# Hospital Bed Tracker
+# Smart Med Tracker
 
 A modern, real-time hospital bed and oxygen cylinder availability tracking system built with **Next.js 15**, **TypeScript**, **Tailwind CSS**, and **Supabase**.
 
@@ -50,7 +50,7 @@ A modern, real-time hospital bed and oxygen cylinder availability tracking syste
 ## 📁 Project Structure
 
 ```
-Hospital Bed/
+Smart Med Tracker/
 ├── app/                    # Next.js 13+ App Router
 │   ├── dashboard/          # Dashboard page
 │   ├── globals.css         # Global styles

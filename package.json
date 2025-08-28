@@ -1,7 +1,7 @@
 {
-  "name": "hospital-bed",
+  "name": "smart-med-tracker",
   "version": "1.0.0",
-  "description": "Hospital Bed Availability System",
+  "description": "Smart Med Tracker - Real-time hospital bed and oxygen availability tracking system",
   "private": true,
   "scripts": {
     "dev": "next dev",

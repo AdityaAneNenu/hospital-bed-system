@@ -1,8 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Activity, Bed, MapPin, Phone, Clock, Plus, LogOut, RefreshCw, ArrowLeft, Heart } from 'lucide-react'
+import { useAuth } from '@/lib/useAuthFixed'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
@@ -11,6 +15,7 @@ interface Hospital {
   id: number
   name: string
   address: string
+  phone_number?: string
   latitude: number
   longitude: number
   availability?: {
@@ -21,15 +26,71 @@ interface Hospital {
 }
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
-  const [userRole, setUserRole] = useState<string>('patient')
+  const { user, profile, loading, signOut } = useAuth()
+  const router = useRouter()
+  const [hospitals, setHospitals] = useState<Hospital[]>([])
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth')
+    }
+  }, [user, loading, router])
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show nothing while redirecting
+  if (!user) {
+    return null
+  }
+
+  return <DashboardContent user={user} profile={profile} signOut={signOut} />
+}
+
+function DashboardContent({ user, profile, signOut }: { 
+  user: any, 
+  profile: any, 
+  signOut: () => Promise<void> 
+}) {
   const [hospitals, setHospitals] = useState<Hospital[]>([])
   const [loading, setLoading] = useState(true)
   const [updateLoading, setUpdateLoading] = useState(false)
-  const router = useRouter()
+  const [userHospital, setUserHospital] = useState<Hospital | null>(null)
+  const [error, setError] = useState('')
+  
+  // Admin form state
+  const [selectedHospital, setSelectedHospital] = useState('')
+  const [beds, setBeds] = useState('')
+  const [oxygen, setOxygen] = useState('')
+
+  // Create Supabase client only once
+  const supabase = useMemo(() => {
+    if (!supabaseUrl || !supabaseAnonKey) return null
+    return createClient(supabaseUrl, supabaseAnonKey)
+  }, [])
+
+  // Debug logging (only when needed)
+  console.log('Dashboard - User ID:', user?.id)
+  console.log('Dashboard - Profile:', { 
+    id: profile?.id, 
+    role: profile?.role, 
+    hospital_id: profile?.hospital_id,
+    name: profile?.name 
+  })
+  console.log('Dashboard - UserHospital:', userHospital)
 
   // Check if Supabase credentials are configured
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseAnonKey || !supabase) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -55,60 +116,64 @@ export default function Dashboard() {
     )
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
-  const [error, setError] = useState('')
-  
-  // Admin form state
-  const [selectedHospital, setSelectedHospital] = useState('')
-  const [beds, setBeds] = useState('')
-  const [oxygen, setOxygen] = useState('')
+  useEffect(() => {
+    if (supabase) {
+      loadHospitals()
+    }
+  }, [supabase])
 
   useEffect(() => {
-    checkAuth()
-    loadHospitals()
-  }, [])
-
-  const checkAuth = async () => {
-    if (supabaseUrl === 'your_project_url_here') {
-      setError('Please configure Supabase credentials')
-      setLoading(false)
-      return
+    if (profile?.role === 'hospital_admin' && profile?.hospital_id && supabase) {
+      loadUserHospital()
     }
+  }, [profile?.role, profile?.hospital_id, supabase])
+
+  const loadUserHospital = async () => {
+    if (!profile?.hospital_id || !supabase) return
+
+    console.log('Loading hospital for hospital_id:', profile.hospital_id)
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        router.push('/')
-        return
-      }
-
-      setUser(session.user)
-      
-      // Get user role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-      
-      setUserRole(profile?.role || 'patient')
-    } catch (error: any) {
-      console.error('Auth error:', error)
-      setError('Authentication failed')
-    }
-  }
-
-  const loadHospitals = async () => {
-    if (supabaseUrl === 'your_project_url_here') return
-
-    try {
-      const { data: hospitals, error } = await supabase
+      const { data: hospital, error } = await supabase
         .from('hospitals')
         .select(`
           id,
           name,
           address,
+          phone_number,
+          latitude,
+          longitude,
+          availability (
+            available_beds,
+            available_oxygen,
+            last_updated
+          )
+        `)
+        .eq('id', profile.hospital_id)
+        .single()
+
+      if (error) throw error
+      console.log('Loaded hospital data:', hospital)
+      setUserHospital(hospital)
+      setSelectedHospital(hospital.id.toString()) // Pre-select user's hospital
+    } catch (error: any) {
+      console.error('Error loading user hospital:', error)
+      setError('Failed to load your hospital data')
+    }
+  }
+
+  const loadHospitals = async () => {
+    if (!supabase) return
+
+    try {
+      // Try the original nested query first
+      let { data: hospitals, error } = await supabase
+        .from('hospitals')
+        .select(`
+          id,
+          name,
+          address,
+          phone_number,
           latitude,
           longitude,
           availability (
@@ -119,7 +184,37 @@ export default function Dashboard() {
         `)
         .order('name')
 
-      if (error) throw error
+      // If the nested query fails or returns no availability data, 
+      // try a simpler approach with separate queries
+      if (error || !hospitals || hospitals.every(h => !h.availability || h.availability.length === 0)) {
+        console.log('Nested query failed or returned no availability, trying alternative approach')
+        
+        // Get hospitals first
+        const { data: hospitalsOnly, error: hospitalsError } = await supabase
+          .from('hospitals')
+          .select('id, name, address, phone_number, latitude, longitude')
+          .order('name')
+
+        if (hospitalsError) throw hospitalsError
+
+        // Get all availability data
+        const { data: availabilityData, error: availabilityError } = await supabase
+          .from('availability')
+          .select('hospital_id, available_beds, available_oxygen, last_updated')
+
+        if (availabilityError) throw availabilityError
+
+        // Manually join the data
+        hospitals = hospitalsOnly?.map(hospital => ({
+          ...hospital,
+          availability: availabilityData?.filter(a => a.hospital_id === hospital.id) || []
+        })) || []
+      }
+
+      if (error && !hospitals) throw error
+      console.log('Loaded hospitals data:', hospitals)
+      console.log('First hospital availability structure:', hospitals?.[0]?.availability)
+      console.log('Hospital 6 data:', hospitals?.find(h => h.id === 6))
       setHospitals(hospitals || [])
     } catch (error: any) {
       console.error('Error loading hospitals:', error)
@@ -132,34 +227,104 @@ export default function Dashboard() {
   const updateAvailability = async (e: React.FormEvent) => {
     e.preventDefault()
     setUpdateLoading(true)
+    setError('') // Clear any previous errors
 
     try {
-      const { error } = await supabase
+      // Validate inputs
+      if (!beds || !oxygen) {
+        throw new Error('Please enter both bed count and oxygen count')
+      }
+
+      if (parseInt(beds) < 0 || parseInt(oxygen) < 0) {
+        throw new Error('Bed and oxygen counts cannot be negative')
+      }
+
+      // For hospital admins, use their hospital ID, for super admins use selected hospital
+      const hospitalIdToUpdate = profile?.role === 'hospital_admin' 
+        ? profile.hospital_id || userHospital?.id
+        : parseInt(selectedHospital)
+
+      if (!hospitalIdToUpdate) {
+        throw new Error('No hospital selected or assigned')
+      }
+
+      console.log('Updating hospital:', {
+        hospitalId: hospitalIdToUpdate,
+        beds: parseInt(beds),
+        oxygen: parseInt(oxygen),
+        userRole: profile?.role,
+        userId: user?.id
+      })
+
+      // Try to update existing record first
+      const { data: updateData, error: updateError } = await supabase
         .from('availability')
-        .upsert({
-          hospital_id: parseInt(selectedHospital),
+        .update({
           available_beds: parseInt(beds),
           available_oxygen: parseInt(oxygen),
-          last_updated: new Date().toISOString()
+          last_updated: new Date().toISOString(),
+          updated_by: user.id
         })
+        .eq('hospital_id', hospitalIdToUpdate)
+        .select()
 
-      if (error) throw error
+      console.log('Update response:', { updateData, updateError })
       
+      if (updateError) {
+        console.error('Update error:', updateError)
+        throw new Error(`Database error: ${updateError.message}`)
+      }
+
+      // If no rows were updated, insert a new record
+      if (!updateData || updateData.length === 0) {
+        const { data: insertData, error: insertError } = await supabase
+          .from('availability')
+          .insert({
+            hospital_id: hospitalIdToUpdate,
+            available_beds: parseInt(beds),
+            available_oxygen: parseInt(oxygen),
+            last_updated: new Date().toISOString(),
+            updated_by: user.id
+          })
+          .select()
+
+        console.log('Insert response:', { insertData, insertError })
+        
+        if (insertError) {
+          console.error('Insert error:', insertError)
+          throw new Error(`Database error: ${insertError.message}`)
+        }
+      }
+      
+      // Success - show success message and reset form
       alert('Availability updated successfully!')
-      setSelectedHospital('')
       setBeds('')
       setOxygen('')
-      loadHospitals() // Refresh data
+      
+      // Refresh data
+      if (supabase) {
+        await loadHospitals()
+        if (profile?.role === 'hospital_admin') {
+          await loadUserHospital()
+        }
+      }
+      
     } catch (error: any) {
-      alert('Error updating availability: ' + error.message)
+      console.error('Update error:', error)
+      const errorMessage = error.message || 'Unknown error occurred'
+      setError(`Failed to update availability: ${errorMessage}`)
+      alert(`Error updating availability: ${errorMessage}`)
     } finally {
       setUpdateLoading(false)
     }
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
   }
 
   const getStatusColor = (count: number) => {
@@ -203,24 +368,68 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold">Hospital Bed Tracker</h1>
+          <div className="flex justify-between items-center h-20">
+            {/* Logo/Brand */}
+            <div className="flex items-center space-x-3">
+              <Heart className="h-8 w-8 text-red-500" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Smart Med Tracker
+              </h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">{user?.email}</span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                {userRole}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+            
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                Home
+              </Link>
+              <Link href="/dashboard" className="text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-3 py-2 rounded-lg">
+                Dashboard
+              </Link>
+              <Link href="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                About
+              </Link>
+              <Link href="/contact" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                Contact
+              </Link>
+              
+              {/* User Info Section */}
+              <div className="flex items-center space-x-4 ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
+                <ThemeToggle />
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">{profile?.name || 'User'}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</div>
+                </div>
+                <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium border dark:border-blue-800">
+                  {profile?.role === 'hospital_admin' ? 'Hospital Admin' : profile?.role || 'Patient'}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center space-x-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </nav>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center space-x-2">
+              <ThemeToggle />
+              <div className="text-right mr-2">
+                <div className="text-sm font-medium text-gray-900 dark:text-white">{profile?.name || 'User'}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Dashboard</div>
+              </div>
+              <button 
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => {/* TODO: Add mobile menu toggle */}}
               >
-                Sign Out
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
               </button>
             </div>
           </div>
@@ -228,54 +437,184 @@ export default function Dashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Admin Panel */}
-        {userRole === 'admin' && (
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-lg font-semibold mb-4">Update Hospital Availability</h2>
-            <form onSubmit={updateAvailability} className="space-y-4">
+        {/* Welcome Message */}
+        {profile && (
+          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-blue-700 dark:via-blue-800 dark:to-indigo-800 rounded-2xl p-8 mb-8 shadow-xl">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Hospital
-                </label>
-                <select
-                  value={selectedHospital}
-                  onChange={(e) => setSelectedHospital(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Choose a hospital...</option>
-                  {hospitals.map((hospital) => (
-                    <option key={hospital.id} value={hospital.id}>
-                      {hospital.name}
-                    </option>
-                  ))}
-                </select>
+                <h2 className="text-3xl font-bold text-white mb-3">
+                  Welcome back, {profile.name || 'User'}! 👋
+                </h2>
+                <p className="text-blue-100 dark:text-blue-200 text-lg mb-4">
+                  {profile.role === 'hospital_admin' 
+                    ? 'Manage your hospital\'s bed and oxygen cylinder availability in real-time.'
+                    : 'Access real-time hospital bed availability and find the care you need.'
+                  }
+                </p>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full flex items-center space-x-2">
+                    <Activity className="h-4 w-4" />
+                    <span className="font-medium">Role: {profile.role === 'hospital_admin' ? 'Hospital Admin' : profile.role}</span>
+                  </div>
+                  {profile.role === 'hospital_admin' && userHospital && (
+                    <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full flex items-center space-x-2">
+                      <MapPin className="h-4 w-4" />
+                      <span className="font-medium">Hospital: {userHospital.name}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="hidden lg:block">
+                <div className="w-32 h-32 bg-white/10 dark:bg-white/5 rounded-full flex items-center justify-center">
+                  <Activity className="h-16 w-16 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hospital Admin's Own Hospital Management */}
+        {profile?.role === 'hospital_admin' && userHospital && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border border-gray-100 dark:border-gray-700">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-blue-800 dark:text-blue-300 font-bold text-xl flex items-center">
+                  <MapPin className="h-6 w-6 mr-2" />
+                  Your Hospital
+                </h3>
+                <div className="bg-blue-600 dark:bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  Live Dashboard
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center text-blue-700 dark:text-blue-300">
+                    <strong className="mr-2">Name:</strong> 
+                    <span className="font-medium">{userHospital.name}</span>
+                  </div>
+                  <div className="flex items-start text-blue-700 dark:text-blue-300">
+                    <strong className="mr-2">Address:</strong> 
+                    <span>{userHospital.address}</span>
+                  </div>
+                  {userHospital.phone_number && (
+                    <div className="flex items-center text-blue-700 dark:text-blue-300">
+                      <Phone className="h-4 w-4 mr-2" />
+                      <strong className="mr-2">Phone:</strong> 
+                      <span>{userHospital.phone_number}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="text-center bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border dark:border-gray-600">
+                    <div className="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-1">
+                      {(() => {
+                        let availability = null
+                        if (userHospital.availability && Array.isArray(userHospital.availability) && userHospital.availability.length > 0) {
+                          availability = userHospital.availability[0]
+                        } else if (userHospital.availability && !Array.isArray(userHospital.availability)) {
+                          availability = userHospital.availability
+                        }
+                        return availability?.available_beds || 0
+                      })()}
+                    </div>
+                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <Bed className="h-4 w-4 mr-1" />
+                      Available Beds
+                    </div>
+                  </div>
+                  <div className="text-center bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border dark:border-gray-600">
+                    <div className="text-3xl font-bold text-green-700 dark:text-green-400 mb-1">
+                      {(() => {
+                        let availability = null
+                        if (userHospital.availability && Array.isArray(userHospital.availability) && userHospital.availability.length > 0) {
+                          availability = userHospital.availability[0]
+                        } else if (userHospital.availability && !Array.isArray(userHospital.availability)) {
+                          availability = userHospital.availability
+                        }
+                        return availability?.available_oxygen || 0
+                      })()}
+                    </div>
+                    <div className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center justify-center">
+                      <Activity className="h-4 w-4 mr-1" />
+                      Oxygen Cylinders
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                <RefreshCw className="h-6 w-6 mr-2 text-blue-600 dark:text-blue-400" />
+                Update Availability
+              </h2>
+              <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                Real-time updates
+              </div>
+            </div>
+            
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-600 rounded-lg p-4 mb-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400 dark:text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-red-800 dark:text-red-300 font-medium">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <form onSubmit={updateAvailability} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                    <Bed className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
                     Available Beds
                   </label>
                   <input
                     type="number"
                     value={beds}
                     onChange={(e) => setBeds(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 font-medium"
                     min="0"
+                    placeholder={(() => {
+                      let availability = null
+                      if (userHospital.availability && Array.isArray(userHospital.availability) && userHospital.availability.length > 0) {
+                        availability = userHospital.availability[0]
+                      } else if (userHospital.availability && !Array.isArray(userHospital.availability)) {
+                        availability = userHospital.availability
+                      }
+                      return `Current: ${availability?.available_beds || 0}`
+                    })()}
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                    <Activity className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
                     Available Oxygen Cylinders
                   </label>
                   <input
                     type="number"
                     value={oxygen}
                     onChange={(e) => setOxygen(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 transition-all duration-200 font-medium"
                     min="0"
+                    placeholder={(() => {
+                      let availability = null
+                      if (userHospital.availability && Array.isArray(userHospital.availability) && userHospital.availability.length > 0) {
+                        availability = userHospital.availability[0]
+                      } else if (userHospital.availability && !Array.isArray(userHospital.availability)) {
+                        availability = userHospital.availability
+                      }
+                      return `Current: ${availability?.available_oxygen || 0}`
+                    })()}
                     required
                   />
                 </div>
@@ -284,53 +623,227 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={updateLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white px-8 py-4 rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                {updateLoading ? 'Updating...' : 'Update Availability'}
+                {updateLoading ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <span>Updating Availability...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-5 w-5" />
+                    <span>Update Availability</span>
+                    <Activity className="h-5 w-5" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Super Admin Panel */}
+        {profile?.role === 'admin' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border border-gray-100 dark:border-gray-700">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-6 mb-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-green-800 dark:text-green-300 font-bold text-xl flex items-center">
+                  <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Super Admin Access
+                </h3>
+                <div className="bg-green-600 dark:bg-green-700 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  Full Control
+                </div>
+              </div>
+              <p className="text-green-700 dark:text-green-300 text-sm mt-2">You have super administrator privileges. You can manage all hospitals in the network.</p>
+            </div>
+            
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                <RefreshCw className="h-6 w-6 mr-2 text-green-600 dark:text-green-400" />
+                Update Any Hospital
+              </h2>
+              <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                <Activity className="h-4 w-4 mr-1" />
+                System-wide control
+              </div>
+            </div>
+            
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 rounded-lg p-4 mb-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400 dark:text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-red-800 dark:text-red-300 font-medium">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <form onSubmit={updateAvailability} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                  <MapPin className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                  Select Hospital
+                </label>
+                <select
+                  value={selectedHospital}
+                  onChange={(e) => setSelectedHospital(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 font-medium"
+                  required
+                >
+                  <option value="">Choose a hospital to manage...</option>
+                  {hospitals.map((hospital) => (
+                    <option key={hospital.id} value={hospital.id}>
+                      {hospital.name} - {hospital.address}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                    <Bed className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                    Available Beds
+                  </label>
+                  <input
+                    type="number"
+                    value={beds}
+                    onChange={(e) => setBeds(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-medium"
+                    min="0"
+                    placeholder="Enter bed count"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                    <Activity className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+                    Available Oxygen Cylinders
+                  </label>
+                  <input
+                    type="number"
+                    value={oxygen}
+                    onChange={(e) => setOxygen(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 font-medium"
+                    min="0"
+                    placeholder="Enter oxygen count"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={updateLoading}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white px-8 py-4 rounded-xl hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                {updateLoading ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <span>Updating Hospital...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Update Hospital Availability</span>
+                    <Activity className="h-5 w-5" />
+                  </>
+                )}
               </button>
             </form>
           </div>
         )}
 
         {/* Hospital List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold">Hospital Availability</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
+          <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                <MapPin className="h-7 w-7 mr-3 text-blue-600 dark:text-blue-400" />
+                Hospital Availability Network
+              </h2>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="font-medium">Live Updates</span>
+              </div>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Real-time bed and oxygen availability across our partner hospitals</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-8">
             {hospitals.map((hospital) => {
-              const availability = hospital.availability?.[0]
+              // Handle different possible availability data structures
+              let availability = null
+              if (hospital.availability && Array.isArray(hospital.availability) && hospital.availability.length > 0) {
+                availability = hospital.availability[0]
+              } else if (hospital.availability && !Array.isArray(hospital.availability)) {
+                availability = hospital.availability
+              }
+              
               const beds = availability?.available_beds || 0
               const oxygenCount = availability?.available_oxygen || 0
               
               return (
-                <div key={hospital.id} className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-1">{hospital.name}</h3>
-                  <p className="text-sm text-gray-600 mb-4">{hospital.address}</p>
+                <div key={hospital.id} className="group bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl p-6 hover:border-blue-200 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{hospital.name}</h3>
+                    <div className="flex items-center space-x-1">
+                      <div className={`w-2 h-2 rounded-full ${beds > 0 || oxygenCount > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <span className={`text-xs font-medium ${beds > 0 || oxygenCount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {beds > 0 || oxygenCount > 0 ? 'Available' : 'Full'}
+                      </span>
+                    </div>
+                  </div>
                   
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold mb-1">{beds}</div>
-                      <div className="text-xs text-gray-600 mb-2">Available Beds</div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(beds)}`}>
+                  <div className="flex items-start text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-400 dark:text-gray-500" />
+                    <p className="line-clamp-2">{hospital.address}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="text-center bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">{beds}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 flex items-center justify-center">
+                        <Bed className="h-3 w-3 mr-1" />
+                        Available Beds
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(beds)}`}>
                         {getStatusText(beds)}
                       </span>
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold mb-1">{oxygenCount}</div>
-                      <div className="text-xs text-gray-600 mb-2">Oxygen Cylinders</div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(oxygenCount)}`}>
+                    <div className="text-center bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{oxygenCount}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 flex items-center justify-center">
+                        <Activity className="h-3 w-3 mr-1" />
+                        Oxygen Cylinders
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(oxygenCount)}`}>
                         {getStatusText(oxygenCount)}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="text-xs text-gray-500 text-center pt-3 border-t">
-                    Last updated: {availability?.last_updated 
-                      ? new Date(availability.last_updated).toLocaleString()
-                      : 'Never'
-                    }
+                  <div className="text-center pt-4 border-t border-gray-100 dark:border-gray-600">
+                    <div className="flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Last updated: {availability?.last_updated 
+                        ? new Date(availability.last_updated).toLocaleString()
+                        : 'Never'
+                      }
+                    </div>
                   </div>
                 </div>
               )
@@ -338,8 +851,12 @@ export default function Dashboard() {
           </div>
           
           {hospitals.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No hospital data available. Please configure your Supabase database.
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="h-12 w-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Hospital Data Available</h3>
+              <p className="text-gray-500 max-w-md mx-auto">Please configure your Supabase database to view hospital information.</p>
             </div>
           )}
         </div>

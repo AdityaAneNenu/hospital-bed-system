@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Activity, Mail, Phone, MapPin, ArrowLeft, Send } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
+import { useAuth } from '@/lib/useAuthFixed'
 
 export default function ContactPage() {
+  const { user, profile, loading: authLoading, signOut, isAuthenticated } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +16,14 @@ export default function ContactPage() {
   })
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Sign out failed:', error)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,29 +45,62 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100">
+      <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors">
-              <ArrowLeft className="h-5 w-5" />
-              <span>Back to Home</span>
-            </Link>
-            
-            <div className="flex items-center space-x-2">
-              <Activity className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                MedTracker
-              </span>
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center space-x-3">
+              <Activity className="h-8 w-8 text-red-500" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Smart Med Tracker
+              </h1>
             </div>
-
-            <Link 
-              href="/auth" 
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-            >
-              Get Started
-            </Link>
+            
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                Home
+              </Link>
+              <Link href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                Dashboard
+              </Link>
+              <Link href="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                About
+              </Link>
+              <Link href="/contact" className="text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 px-3 py-2 rounded-lg">
+                Contact
+              </Link>
+              
+              <ThemeToggle />
+              
+              {isAuthenticated ? (
+                <button 
+                  onClick={handleSignOut}
+                  className="bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium ml-2"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link 
+                  href="/auth" 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium ml-2"
+                >
+                  Get Started
+                </Link>
+              )}
+            </nav>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button 
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => {/* TODO: Add mobile menu toggle */}}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -64,11 +108,11 @@ export default function ContactPage() {
       {/* Hero Section */}
       <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-gray-100 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent mb-6">
             Contact Us
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 leading-relaxed">
-            We're here to help. Get in touch with our team for support, partnerships, or any questions about MedTracker.
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed">
+            We're here to help. Get in touch with our team for support, partnerships, or any questions about Smart Med Tracker.
           </p>
         </div>
       </section>
@@ -79,33 +123,33 @@ export default function ContactPage() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Contact Information */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Get in Touch</h2>
                 
                 <div className="space-y-6">
                   <ContactInfo
-                    icon={<Mail className="h-6 w-6 text-blue-600" />}
+                    icon={<Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />}
                     title="Email"
                     info="support@medtracker.com"
                     description="For general inquiries and support"
                   />
                   <ContactInfo
-                    icon={<Phone className="h-6 w-6 text-green-600" />}
+                    icon={<Phone className="h-6 w-6 text-green-600 dark:text-green-400" />}
                     title="Phone"
                     info="+1 (555) 123-4567"
                     description="24/7 emergency support hotline"
                   />
                   <ContactInfo
-                    icon={<MapPin className="h-6 w-6 text-red-600" />}
+                    icon={<MapPin className="h-6 w-6 text-red-600 dark:text-red-400" />}
                     title="Address"
                     info="123 Healthcare Ave, Medical District, NY 10001"
                     description="Our headquarters"
                   />
                 </div>
 
-                <div className="mt-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                  <h3 className="font-semibold text-gray-900 mb-2">Emergency Support</h3>
-                  <p className="text-sm text-gray-600">
+                <div className="mt-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Emergency Support</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     For critical system issues affecting patient care, call our 24/7 emergency line immediately.
                   </p>
                 </div>
@@ -114,21 +158,21 @@ export default function ContactPage() {
 
             {/* Contact Form */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Send us a Message</h2>
                 
                 {submitted ? (
                   <div className="text-center py-12">
-                    <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <Send className="h-8 w-8 text-green-600" />
+                    <div className="bg-green-100 dark:bg-green-900/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                      <Send className="h-8 w-8 text-green-600 dark:text-green-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Message Sent!</h3>
-                    <p className="text-gray-600 mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Message Sent!</h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
                       Thank you for contacting us. We'll get back to you within 24 hours.
                     </p>
                     <button
                       onClick={() => setSubmitted(false)}
-                      className="text-blue-600 hover:text-blue-500 font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
                     >
                       Send Another Message
                     </button>
@@ -137,7 +181,7 @@ export default function ContactPage() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Full Name
                         </label>
                         <input
@@ -147,12 +191,12 @@ export default function ContactPage() {
                           required
                           value={formData.name}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           placeholder="Your full name"
                         />
                       </div>
                       <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Email Address
                         </label>
                         <input
@@ -162,14 +206,14 @@ export default function ContactPage() {
                           required
                           value={formData.email}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           placeholder="your@email.com"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Subject
                       </label>
                       <select
@@ -178,7 +222,7 @@ export default function ContactPage() {
                         required
                         value={formData.subject}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       >
                         <option value="">Select a subject</option>
                         <option value="general">General Inquiry</option>
@@ -190,7 +234,7 @@ export default function ContactPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Message
                       </label>
                       <textarea
@@ -200,7 +244,7 @@ export default function ContactPage() {
                         required
                         value={formData.message}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         placeholder="Tell us how we can help you..."
                       />
                     </div>
@@ -208,7 +252,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                       {loading ? (
                         <>
@@ -231,13 +275,13 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               Quick answers to common questions
             </p>
           </div>
@@ -264,12 +308,12 @@ export default function ContactPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Activity className="h-6 w-6 text-blue-400" />
-              <span className="text-xl font-bold">MedTracker</span>
+              <span className="text-xl font-bold">Smart Med Tracker</span>
             </div>
             <p className="text-gray-400">
               Connecting patients with healthcare facilities through real-time bed availability tracking.
@@ -279,8 +323,8 @@ export default function ContactPage() {
               <Link href="/about" className="text-gray-400 hover:text-white transition-colors">About</Link>
               <Link href="/auth" className="text-gray-400 hover:text-white transition-colors">Sign In</Link>
             </div>
-            <div className="border-t border-gray-800 mt-8 pt-8 text-gray-400">
-              <p>&copy; 2025 MedTracker. All rights reserved.</p>
+            <div className="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-gray-400">
+              <p>&copy; 2025 Smart Med Tracker. All rights reserved.</p>
             </div>
           </div>
         </div>
@@ -301,9 +345,9 @@ function ContactInfo({ icon, title, info, description }: {
         {icon}
       </div>
       <div>
-        <h3 className="font-medium text-gray-900">{title}</h3>
-        <p className="text-gray-900 font-medium">{info}</p>
-        <p className="text-sm text-gray-600">{description}</p>
+        <h3 className="font-medium text-gray-900 dark:text-white">{title}</h3>
+        <p className="text-gray-900 dark:text-white font-medium">{info}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>
       </div>
     </div>
   )
@@ -313,17 +357,17 @@ function FAQItem({ question, answer }: { question: string, answer: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="border border-gray-200 rounded-lg">
+    <div className="border border-gray-200 dark:border-gray-600 rounded-lg">
       <button
-        className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+        className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="font-medium text-gray-900">{question}</span>
-        <span className="text-gray-500">{isOpen ? '−' : '+'}</span>
+        <span className="font-medium text-gray-900 dark:text-white">{question}</span>
+        <span className="text-gray-500 dark:text-gray-400">{isOpen ? '−' : '+'}</span>
       </button>
       {isOpen && (
         <div className="px-6 pb-4">
-          <p className="text-gray-600">{answer}</p>
+          <p className="text-gray-600 dark:text-gray-300">{answer}</p>
         </div>
       )}
     </div>
