@@ -194,7 +194,7 @@ function AuthForm() {
   return (
     <>
       {/* Navigation */}
-      <nav className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 sticky top-0 z-50">
+      <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-3">
@@ -205,13 +205,13 @@ function AuthForm() {
             </div>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50">
+              <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                 Home
               </Link>
-              <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50">
+              <Link href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                 Dashboard
               </Link>
-              <Link href="/about" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50">
+              <Link href="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                 About
               </Link>
               <Link href="/contact" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
@@ -222,7 +222,7 @@ function AuthForm() {
               
               <Link 
                 href="/auth" 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium ml-2"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium ml-2"
               >
                 Sign In
               </Link>
@@ -231,7 +231,7 @@ function AuthForm() {
             {/* Mobile menu button */}
             <div className="md:hidden">
               <button 
-                className="text-gray-700 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 onClick={() => {/* TODO: Add mobile menu toggle */}}
               >
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,10 +247,10 @@ function AuthForm() {
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h2>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
               {isSignUp 
                 ? 'Join Smart Med Tracker to access real-time hospital data' 
                 : 'Sign in to access your dashboard'
@@ -258,10 +258,10 @@ function AuthForm() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 p-8">
             <form className="space-y-6" onSubmit={handleAuth}>
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg">
                   {error}
                 </div>
               )}
@@ -269,7 +269,7 @@ function AuthForm() {
               {/* User Type Selection for Signup */}
               {isSignUp && !userType && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 text-center">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center">
                     Select Account Type
                   </h3>
                   
@@ -277,24 +277,24 @@ function AuthForm() {
                     <button
                       type="button"
                       onClick={() => setUserType('patient')}
-                      className="flex items-center p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
+                      className="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                     >
-                      <User className="h-8 w-8 text-blue-600 mr-4" />
+                      <User className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-4" />
                       <div className="text-left">
-                        <div className="font-semibold text-gray-900">Patient</div>
-                        <div className="text-sm text-gray-600">Find and track hospital bed availability</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">Patient</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Find and track hospital bed availability</div>
                       </div>
                     </button>
                     
                     <button
                       type="button"
                       onClick={() => setUserType('hospital_admin')}
-                      className="flex items-center p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
+                      className="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                     >
-                      <Building2 className="h-8 w-8 text-blue-600 mr-4" />
+                      <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-4" />
                       <div className="text-left">
-                        <div className="font-semibold text-gray-900">Hospital Admin</div>
-                        <div className="text-sm text-gray-600">Manage hospital data and bed availability</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">Hospital Admin</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Manage hospital data and bed availability</div>
                       </div>
                     </button>
                   </div>
@@ -306,14 +306,14 @@ function AuthForm() {
                 <>
                   {/* Common Email Field */}
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email address
                     </label>
                     <input
                       id="email"
                       type="email"
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                       placeholder="Enter your email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -324,14 +324,14 @@ function AuthForm() {
                   {isSignUp && userType === 'patient' && (
                     <>
                       <div>
-                        <label htmlFor="patientName" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="patientName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Full Name *
                         </label>
                         <input
                           id="patientName"
                           type="text"
                           required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                           placeholder="Enter your full name"
                           value={patientName}
                           onChange={(e) => setPatientName(e.target.value)}
@@ -340,7 +340,7 @@ function AuthForm() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="age" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Age *
                           </label>
                           <input
@@ -349,7 +349,7 @@ function AuthForm() {
                             required
                             min="1"
                             max="150"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                             placeholder="Age"
                             value={age}
                             onChange={(e) => setAge(e.target.value)}
@@ -357,13 +357,13 @@ function AuthForm() {
                         </div>
 
                         <div>
-                          <label htmlFor="sex" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="sex" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Sex *
                           </label>
                           <select
                             id="sex"
                             required
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                             value={sex}
                             onChange={(e) => setSex(e.target.value)}
                           >
@@ -381,14 +381,14 @@ function AuthForm() {
                   {isSignUp && userType === 'hospital_admin' && (
                     <>
                       <div>
-                        <label htmlFor="adminName" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="adminName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Admin Name *
                         </label>
                         <input
                           id="adminName"
                           type="text"
                           required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                           placeholder="Enter admin name"
                           value={adminName}
                           onChange={(e) => setAdminName(e.target.value)}
@@ -396,14 +396,14 @@ function AuthForm() {
                       </div>
 
                       <div>
-                        <label htmlFor="hospitalName" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="hospitalName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Hospital Name *
                         </label>
                         <input
                           id="hospitalName"
                           type="text"
                           required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                           placeholder="Enter hospital name"
                           value={hospitalName}
                           onChange={(e) => setHospitalName(e.target.value)}
@@ -411,14 +411,14 @@ function AuthForm() {
                       </div>
 
                       <div>
-                        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Address *
                         </label>
                         <textarea
                           id="address"
                           required
                           rows={3}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                           placeholder="Enter hospital address"
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
@@ -426,14 +426,14 @@ function AuthForm() {
                       </div>
 
                       <div>
-                        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Phone Number *
                         </label>
                         <input
                           id="phoneNumber"
                           type="tel"
                           required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                           placeholder="Enter phone number"
                           value={phoneNumber}
                           onChange={(e) => setPhoneNumber(e.target.value)}
@@ -444,7 +444,7 @@ function AuthForm() {
 
                   {/* Password Field */}
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Password
                     </label>
                     <div className="relative">
@@ -452,7 +452,7 @@ function AuthForm() {
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         required
-                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -463,9 +463,9 @@ function AuthForm() {
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-5 w-5 text-gray-400" />
+                          <EyeOff className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                         ) : (
-                          <Eye className="h-5 w-5 text-gray-400" />
+                          <Eye className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                         )}
                       </button>
                     </div>
@@ -475,7 +475,7 @@ function AuthForm() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 shadow-lg hover:shadow-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
                   </button>
@@ -485,7 +485,7 @@ function AuthForm() {
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="w-full text-gray-600 hover:text-gray-800 transition-colors"
+                      className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                     >
                       ← Back to account type selection
                     </button>
@@ -497,7 +497,7 @@ function AuthForm() {
             <div className="mt-6 text-center">
               <button
                 type="button"
-                className="text-blue-600 hover:text-blue-500 font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
                 onClick={() => {
                   setIsSignUp(!isSignUp)
                   resetForm()
@@ -544,7 +544,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Suspense fallback={<div>Loading...</div>}>
         <AuthForm />
       </Suspense>
