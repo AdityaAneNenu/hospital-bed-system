@@ -211,6 +211,9 @@ function AuthForm() {
               <Link href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                 Dashboard
               </Link>
+              <Link href="/profile" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                Profile
+              </Link>
               <Link href="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                 About
               </Link>
@@ -267,6 +270,15 @@ function AuthForm() {
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Dashboard
+                    </Link>
+                  </div>
+                  <div className="flow-root">
+                    <Link
+                      href="/profile"
+                      className="-m-2 block p-2 font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Profile
                     </Link>
                   </div>
                   <div className="flow-root">

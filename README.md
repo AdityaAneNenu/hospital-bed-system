@@ -6,9 +6,17 @@ A modern, real-time hospital bed and oxygen cylinder availability tracking syste
 
 - **Real-time Availability Tracking**: View current bed and oxygen cylinder availability across multiple hospitals
 - **Role-based Access**: Different interfaces for patients (view-only) and administrators (can update data)
+- **User Profile Management**: Advanced profile editing with personal data management
+  - Edit personal information (name, age, gender, phone number, address)
+  - Role-specific fields (hospital name for admins)
+  - Real-time profile updates with validation
+  - Secure profile data handling
 - **Modern UI**: Clean, responsive design with Tailwind CSS
+- **Mobile-First Design**: Fully responsive with working mobile navigation
 - **Type Safety**: Full TypeScript implementation
 - **Server-Side Rendering**: Fast loading with Next.js App Router
+- **Authentication System**: Secure login/signup with role-based access
+- **Dark Mode Support**: Toggle between light and dark themes
 
 ## 🚀 Quick Start
 
@@ -52,12 +60,22 @@ A modern, real-time hospital bed and oxygen cylinder availability tracking syste
 ```
 Smart Med Tracker/
 ├── app/                    # Next.js 13+ App Router
+│   ├── about/              # About page
+│   ├── auth/               # Authentication page
+│   ├── contact/            # Contact page
 │   ├── dashboard/          # Dashboard page
+│   ├── profile/            # User profile management
 │   ├── globals.css         # Global styles
 │   ├── layout.tsx          # Root layout
-│   └── page.tsx            # Home/login page
+│   └── page.tsx            # Home page
 ├── components/             # Reusable React components
+│   ├── AuthGuard.tsx       # Authentication protection
+│   ├── ThemeProvider.tsx   # Dark/light theme provider
+│   └── ThemeToggle.tsx     # Theme toggle component
 ├── lib/                    # Utility functions and configs
+│   ├── useAuth.ts          # Authentication hooks
+│   ├── useAuthFixed.ts     # Enhanced auth hook
+│   └── useTheme.ts         # Theme management
 ├── public/                 # Static assets
 ├── .env.local.example      # Environment variables template
 ├── next.config.js          # Next.js configuration
@@ -106,23 +124,26 @@ Smart Med Tracker/
 
 ## 👥 User Roles
 
-- **Patient**: Can view hospital availability and locations
-- **Admin**: Can update hospital bed and oxygen availability
+- **Patient**: Can view hospital availability, locations, and manage personal profile
+- **Hospital Admin**: Can update hospital bed and oxygen availability, manage hospital information, and profile
 
 ## 🗄 Database Structure
 
 The system uses three main tables:
 - `hospitals`: Hospital information and locations
-- `availability`: Real-time bed and oxygen availability
-- `profiles`: User role management
+- `availability`: Real-time bed and oxygen availability  
+- `profiles`: User role management and personal information (name, age, sex, phone_number, hospital_name, address)
 
 ## 🎨 UI Features
 
 - Clean, modern Next.js interface
+- Advanced profile management system
 - Tailwind CSS styling system
 - Color-coded availability indicators
 - Real-time data updates
-- Mobile-responsive design
+- Mobile-responsive design with working navigation
+- Dark/Light theme support
+- Smooth animations and transitions
 - TypeScript for better development experience
 
 ## 🔒 Security

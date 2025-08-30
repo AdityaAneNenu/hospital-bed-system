@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Activity, Mail, Phone, MapPin, ArrowLeft, Send, X } from 'lucide-react'
+import { Activity, Mail, Phone, MapPin, ArrowLeft, Send, X, User } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/useAuthFixed'
 
@@ -74,12 +74,29 @@ export default function ContactPage() {
               <ThemeToggle />
               
               {isAuthenticated ? (
-                <button 
-                  onClick={handleSignOut}
-                  className="bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium ml-2"
-                >
-                  Sign Out
-                </button>
+                <div className="flex items-center space-x-3">
+                  <Link
+                    href="/profile"
+                    className="relative flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors group"
+                    title="View Profile"
+                  >
+                    {profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                    )}
+                  </Link>
+                  <button 
+                    onClick={handleSignOut}
+                    className="bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium ml-2"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               ) : (
                 <Link 
                   href="/auth" 
@@ -154,8 +171,26 @@ export default function ContactPage() {
                 <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-6">
                   {isAuthenticated ? (
                     <div className="space-y-4">
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Welcome, {profile?.name || 'User'}!
+                      <div className="flex items-center space-x-3">
+                        <Link
+                          href="/profile"
+                          className="relative flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors group"
+                          title="View Profile"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {profile?.avatar_url ? (
+                            <img 
+                              src={profile.avatar_url} 
+                              alt="Profile" 
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                          )}
+                        </Link>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Welcome, {profile?.name || 'User'}!
+                        </div>
                       </div>
                       <button 
                         onClick={() => {

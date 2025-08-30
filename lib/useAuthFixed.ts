@@ -22,6 +22,7 @@ interface Profile {
   hospital_name?: string
   address?: string
   phone_number?: string
+  avatar_url?: string
 }
 
 export function useAuth() {
