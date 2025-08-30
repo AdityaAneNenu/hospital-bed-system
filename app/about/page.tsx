@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Activity, Heart, Users, Award, ArrowLeft } from 'lucide-react'
+import { Activity, Heart, Users, Award, ArrowLeft, X } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/useAuthFixed'
 
 export default function AboutPage() {
   const { user, profile, loading, signOut, isAuthenticated } = useAuth()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -24,15 +25,14 @@ export default function AboutPage() {
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-3">
               <Heart className="h-8 w-8 text-red-500" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Smart Med Tracker
-              </h1>
+              <Link href="/" className="hover:opacity-80 transition-opacity">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Smart Med Tracker
+                </h1>
+              </Link>
             </div>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                Home
-              </Link>
               <Link href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                 Dashboard
               </Link>
@@ -63,10 +63,11 @@ export default function AboutPage() {
             </nav>
             
             {/* Mobile menu button */}
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center space-x-2">
+              <ThemeToggle />
               <button 
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                onClick={() => {/* TODO: Add mobile menu toggle */}}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -75,6 +76,83 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div className="fixed inset-0 bg-black bg-opacity-25" onClick={() => setIsMobileMenuOpen(false)}></div>
+              <div className="relative flex w-full max-w-xs flex-col bg-white dark:bg-gray-900 pb-12 shadow-xl">
+                <div className="flex px-4 pb-2 pt-5">
+                  <button
+                    type="button"
+                    className="-m-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:text-gray-500"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6 border-t border-gray-200 dark:border-gray-700 px-4 py-6">
+                  <div className="flow-root">
+                    <Link
+                      href="/dashboard"
+                      className="-m-2 block p-2 font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
+                  <div className="flow-root">
+                    <Link
+                      href="/about"
+                      className="-m-2 block p-2 font-medium text-blue-600 dark:text-blue-400"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      About
+                    </Link>
+                  </div>
+                  <div className="flow-root">
+                    <Link
+                      href="/contact"
+                      className="-m-2 block p-2 font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Contact
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-6">
+                  {isAuthenticated ? (
+                    <div className="space-y-4">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Welcome, {profile?.name || 'User'}!
+                      </div>
+                      <button 
+                        onClick={() => {
+                          handleSignOut()
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  ) : (
+                    <Link 
+                      href="/auth" 
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium text-center block"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
