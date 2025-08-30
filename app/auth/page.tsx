@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Eye, EyeOff, Activity, User, Building2, Heart, X } from 'lucide-react'
+import { Eye, EyeOff, User, Building2, Heart, X } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -157,9 +157,10 @@ function AuthForm() {
 
               console.log('Hospital created successfully with ID:', hospitalData)
               
-            } catch (error: any) {
+            } catch (error: unknown) {
               console.error('Hospital admin registration error:', error)
-              alert('Failed to complete hospital admin registration: ' + error.message)
+              const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+              alert('Failed to complete hospital admin registration: ' + errorMessage)
               return
             }
           }
@@ -174,8 +175,9 @@ function AuthForm() {
         if (error) throw error
         router.push('/')
       }
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

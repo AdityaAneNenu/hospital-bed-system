@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, Activity, Users, MapPin, ArrowRight, Building2, Phone, Mail, Shield, User, X, LogOut } from 'lucide-react'
+import Image from 'next/image'
+import { Heart, Activity, Users, MapPin, ArrowRight, Building2, Phone, Mail, Shield, User, X } from 'lucide-react'
 import { useAuth } from '@/lib/useAuthFixed'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useState } from 'react'
 
 export default function Home() {
-  const { user, profile, loading, signOut, isAuthenticated } = useAuth()
+  const { profile, loading, signOut, isAuthenticated } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
@@ -59,9 +60,11 @@ export default function Home() {
                     title="View Profile"
                   >
                     {profile?.avatar_url ? (
-                      <img 
+                      <Image 
                         src={profile.avatar_url} 
                         alt="Profile" 
+                        width={32}
+                        height={32}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
@@ -154,9 +157,11 @@ export default function Home() {
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {profile?.avatar_url ? (
-                            <img 
+                            <Image 
                               src={profile.avatar_url} 
                               alt="Profile" 
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (

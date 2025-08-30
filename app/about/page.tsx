@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Activity, Heart, Users, Award, ArrowLeft, X, User } from 'lucide-react'
+import Image from 'next/image'
+import { Activity, Heart, Users, Award, X, User } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/useAuthFixed'
 
 export default function AboutPage() {
-  const { user, profile, loading, signOut, isAuthenticated } = useAuth()
+  const { profile, signOut, isAuthenticated } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
@@ -57,9 +58,11 @@ export default function AboutPage() {
                     title="View Profile"
                   >
                     {profile?.avatar_url ? (
-                      <img 
+                      <Image 
                         src={profile.avatar_url} 
                         alt="Profile" 
+                        width={32}
+                        height={32}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
@@ -154,9 +157,11 @@ export default function AboutPage() {
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {profile?.avatar_url ? (
-                            <img 
+                            <Image 
                               src={profile.avatar_url} 
                               alt="Profile" 
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
@@ -205,7 +210,7 @@ export default function AboutPage() {
             About Smart Med Tracker
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed">
-            We're on a mission to revolutionize healthcare accessibility by providing real-time hospital bed and resource tracking.
+            We&apos;re on a mission to revolutionize healthcare accessibility by providing real-time hospital bed and resource tracking.
           </p>
         </div>
       </section>

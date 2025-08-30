@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import type { User } from '@supabase/supabase-js'
 
@@ -30,6 +30,20 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const checkUser = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setUser(session.user)
+        await fetchProfile(session.user.id)
+      }
+      setLoading(false)
+    } catch (error) {
+      console.error('Auth error:', error)
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     // Get initial session
     checkUser()
@@ -49,21 +63,7 @@ export function useAuth() {
     )
 
     return () => subscription.unsubscribe()
-  }, [])
-
-  async function checkUser() {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        setUser(session.user)
-        await fetchProfile(session.user.id)
-      }
-      setLoading(false)
-    } catch (error) {
-      console.error('Auth error:', error)
-      setLoading(false)
-    }
-  }
+  }, [checkUser])
 
   async function fetchProfile(userId: string) {
     try {

@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Activity, Mail, Phone, MapPin, ArrowLeft, Send, X, User } from 'lucide-react'
+import Image from 'next/image'
+import { Activity, Mail, Phone, MapPin, Send, X, User } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/lib/useAuthFixed'
 
 export default function ContactPage() {
-  const { user, profile, loading: authLoading, signOut, isAuthenticated } = useAuth()
+  const { profile, signOut, isAuthenticated } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -81,9 +82,11 @@ export default function ContactPage() {
                     title="View Profile"
                   >
                     {profile?.avatar_url ? (
-                      <img 
+                      <Image 
                         src={profile.avatar_url} 
                         alt="Profile" 
+                        width={32}
+                        height={32}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
@@ -179,9 +182,11 @@ export default function ContactPage() {
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {profile?.avatar_url ? (
-                            <img 
+                            <Image 
                               src={profile.avatar_url} 
                               alt="Profile" 
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
@@ -225,7 +230,7 @@ export default function ContactPage() {
             Contact Us
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed">
-            We're here to help. Get in touch with our team for support, partnerships, or any questions about Smart Med Tracker.
+            We&apos;re here to help. Get in touch with our team for support, partnerships, or any questions about Smart Med Tracker.
           </p>
         </div>
       </section>
@@ -281,7 +286,7 @@ export default function ContactPage() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Message Sent!</h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-6">
-                      Thank you for contacting us. We'll get back to you within 24 hours.
+                      Thank you for contacting us. We&apos;ll get back to you within 24 hours.
                     </p>
                     <button
                       onClick={() => setSubmitted(false)}

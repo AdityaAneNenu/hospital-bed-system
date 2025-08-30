@@ -5,7 +5,7 @@ import { useTheme } from '@/lib/useTheme'
 import { useState } from 'react'
 
 export default function ThemeToggle() {
-  const { theme, setTheme, isDark } = useTheme()
+  const { theme, setTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
 
   const themes = [

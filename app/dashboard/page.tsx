@@ -1,15 +1,30 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Activity, Bed, MapPin, Phone, Clock, Plus, LogOut, RefreshCw, ArrowLeft, Heart, X, User, Building, Droplets, TrendingUp } from 'lucide-react'
+import Image from 'next/image'
+import { Activity, Bed, MapPin, Phone, Clock, Plus, RefreshCw, Heart, User, Building, Droplets, TrendingUp } from 'lucide-react'
 import { useAuth } from '@/lib/useAuthFixed'
 import ThemeToggle from '@/components/ThemeToggle'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+interface Profile {
+  id: string
+  name: string
+  age: number
+  sex: string
+  role: string
+  hospital_name?: string
+  address?: string
+  phone_number?: string
+  avatar_url?: string
+  hospital_id?: string
+}
 
 interface Hospital {
   id: number
@@ -28,7 +43,6 @@ interface Hospital {
 export default function Dashboard() {
   const { user, profile, loading, signOut } = useAuth()
   const router = useRouter()
-  const [hospitals, setHospitals] = useState<Hospital[]>([])
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -58,8 +72,8 @@ export default function Dashboard() {
 }
 
 function DashboardContent({ user, profile, signOut }: { 
-  user: any, 
-  profile: any, 
+  user: SupabaseUser | null, 
+  profile: Profile | null, 
   signOut: () => Promise<void> 
 }) {
   const [hospitals, setHospitals] = useState<Hospital[]>([])
@@ -90,46 +104,7 @@ function DashboardContent({ user, profile, signOut }: {
   })
   console.log('Dashboard - UserHospital:', userHospital)
 
-  // Check if Supabase credentials are configured
-  if (!supabaseUrl || !supabaseAnonKey || !supabase) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Configuration Required
-          </h2>
-          <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Supabase Configuration Missing
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>Please set up your Supabase environment variables to access the dashboard.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  useEffect(() => {
-    if (supabase) {
-      loadHospitals()
-    }
-  }, [supabase])
-
-  useEffect(() => {
-    if (profile?.role === 'hospital_admin' && profile?.hospital_id && supabase) {
-      loadUserHospital()
-    }
-  }, [profile?.role, profile?.hospital_id, supabase])
-
-  const loadUserHospital = async () => {
+  const loadUserHospital = useCallback(async () => {
     if (!profile?.hospital_id || !supabase) return
 
     console.log('Loading hospital for hospital_id:', profile.hospital_id)
@@ -157,18 +132,18 @@ function DashboardContent({ user, profile, signOut }: {
       console.log('Loaded hospital data:', hospital)
       setUserHospital(hospital)
       setSelectedHospital(hospital.id.toString()) // Pre-select user's hospital
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading user hospital:', error)
       setError('Failed to load your hospital data')
     }
-  }
+  }, [profile?.hospital_id, supabase])
 
-  const loadHospitals = async () => {
+  const loadHospitals = useCallback(async () => {
     if (!supabase) return
 
     try {
       // Try the original nested query first
-      let { data: hospitals, error } = await supabase
+      const response = await supabase
         .from('hospitals')
         .select(`
           id,
@@ -185,9 +160,12 @@ function DashboardContent({ user, profile, signOut }: {
         `)
         .order('name')
 
+      let hospitals = response.data
+      const hospitalError = response.error
+
       // If the nested query fails or returns no availability data, 
       // try a simpler approach with separate queries
-      if (error || !hospitals || hospitals.every(h => !h.availability || h.availability.length === 0)) {
+      if (hospitalError || !hospitals || hospitals.every(h => !h.availability || h.availability.length === 0)) {
         console.log('Nested query failed or returned no availability, trying alternative approach')
         
         // Get hospitals first
@@ -217,13 +195,24 @@ function DashboardContent({ user, profile, signOut }: {
       console.log('First hospital availability structure:', hospitals?.[0]?.availability)
       console.log('Hospital 6 data:', hospitals?.find(h => h.id === 6))
       setHospitals(hospitals || [])
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading hospitals:', error)
       setError('Failed to load hospital data')
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])  // Include supabase dependency
+
+  // useEffect hooks after function definitions
+  useEffect(() => {
+    loadHospitals()
+  }, [loadHospitals])
+
+  useEffect(() => {
+    if (profile?.role === 'hospital_admin' && profile?.hospital_id && supabase) {
+      loadUserHospital()
+    }
+  }, [profile?.role, profile?.hospital_id, supabase, loadUserHospital])
 
   const updateAvailability = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -238,6 +227,10 @@ function DashboardContent({ user, profile, signOut }: {
 
       if (parseInt(beds) < 0 || parseInt(oxygen) < 0) {
         throw new Error('Bed and oxygen counts cannot be negative')
+      }
+
+      if (!supabase || !user) {
+        throw new Error('Configuration error: Please check your setup')
       }
 
       // For hospital admins, use their hospital ID, for super admins use selected hospital
@@ -310,9 +303,9 @@ function DashboardContent({ user, profile, signOut }: {
         }
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Update error:', error)
-      const errorMessage = error.message || 'Unknown error occurred'
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
       setError(`Failed to update availability: ${errorMessage}`)
       alert(`Error updating availability: ${errorMessage}`)
     } finally {
@@ -416,9 +409,11 @@ function DashboardContent({ user, profile, signOut }: {
                   title="View Profile"
                 >
                   {profile?.avatar_url ? (
-                    <img 
+                    <Image 
                       src={profile.avatar_url} 
                       alt="Profile" 
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
@@ -486,9 +481,11 @@ function DashboardContent({ user, profile, signOut }: {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {profile?.avatar_url ? (
-                      <img 
+                      <Image 
                         src={profile.avatar_url} 
                         alt="Profile" 
+                        width={24}
+                        height={24}
                         className="w-6 h-6 rounded-full object-cover"
                       />
                     ) : (
@@ -632,7 +629,7 @@ function DashboardContent({ user, profile, signOut }: {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-black text-gray-900 dark:text-white mb-1">
-                    {hospitals.reduce((total, hospital) => {
+                    {hospitals.reduce((total: number, hospital: Hospital) => {
                       let availability = null
                       if (hospital.availability && Array.isArray(hospital.availability) && hospital.availability.length > 0) {
                         availability = hospital.availability[0]
@@ -669,7 +666,7 @@ function DashboardContent({ user, profile, signOut }: {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-black text-gray-900 dark:text-white mb-1">
-                    {hospitals.reduce((total, hospital) => {
+                    {hospitals.reduce((total: number, hospital: Hospital) => {
                       let availability = null
                       if (hospital.availability && Array.isArray(hospital.availability) && hospital.availability.length > 0) {
                         availability = hospital.availability[0]
@@ -925,7 +922,7 @@ function DashboardContent({ user, profile, signOut }: {
                   required
                 >
                   <option value="">Choose a hospital to manage...</option>
-                  {hospitals.map((hospital) => (
+                  {hospitals.map((hospital: Hospital) => (
                     <option key={hospital.id} value={hospital.id}>
                       {hospital.name} - {hospital.address}
                     </option>
@@ -1027,7 +1024,7 @@ function DashboardContent({ user, profile, signOut }: {
             </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-8">
-            {hospitals.map((hospital) => {
+            {hospitals.map((hospital: Hospital) => {
               // Handle different possible availability data structures
               let availability = null
               if (hospital.availability && Array.isArray(hospital.availability) && hospital.availability.length > 0) {

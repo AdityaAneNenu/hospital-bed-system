@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Heart, ArrowLeft, Save, Edit, X, Check, Mail, Phone, MapPin, Building2, Calendar, Users, Camera, Upload, Trash2 } from 'lucide-react'
+import Image from 'next/image'
+import { User, Heart, ArrowLeft, Edit, X, Check, Mail, Phone, MapPin, Building2, Calendar, Users, Camera, Trash2 } from 'lucide-react'
 import { useAuth } from '@/lib/useAuthFixed'
 import ThemeToggle from '@/components/ThemeToggle'
 import { AuthGuard } from '@/components/AuthGuard'
@@ -33,8 +33,7 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user, profile, loading: authLoading, signOut, isAuthenticated } = useAuth()
-  const router = useRouter()
+  const { user, profile, loading: authLoading, signOut } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -62,28 +61,7 @@ function ProfileContent() {
     avatar_url: ''
   })
 
-  useEffect(() => {
-    if (profile) {
-      const profileData = {
-        name: profile.name || '',
-        age: profile.age || 0,
-        sex: profile.sex || '',
-        phone_number: profile.phone_number || '',
-        hospital_name: profile.hospital_name || '',
-        address: profile.address || '',
-        avatar_url: profile.avatar_url || ''
-      }
-      setFormData(profileData)
-      setOriginalData(profileData)
-      
-      // If user is hospital admin and hospital_name is empty, fetch it from hospitals table
-      if (profile.role === 'hospital_admin' && !profile.hospital_name && user) {
-        fetchHospitalName(user.id)
-      }
-    }
-  }, [profile, user])
-
-  const fetchHospitalName = async (userId: string) => {
+  const fetchHospitalName = useCallback(async (userId: string) => {
     try {
       // Try to get hospital name from hospitals table where the admin is linked
       const { data, error } = await supabase
@@ -109,7 +87,28 @@ function ProfileContent() {
     } catch (error) {
       console.error('Error fetching hospital name:', error)
     }
-  }
+  }, [formData])
+
+  useEffect(() => {
+    if (profile) {
+      const profileData = {
+        name: profile.name || '',
+        age: profile.age || 0,
+        sex: profile.sex || '',
+        phone_number: profile.phone_number || '',
+        hospital_name: profile.hospital_name || '',
+        address: profile.address || '',
+        avatar_url: profile.avatar_url || ''
+      }
+      setFormData(profileData)
+      setOriginalData(profileData)
+      
+      // If user is hospital admin and hospital_name is empty, fetch it from hospitals table
+      if (profile.role === 'hospital_admin' && !profile.hospital_name && user) {
+        fetchHospitalName(user.id)
+      }
+    }
+  }, [profile, user, fetchHospitalName])
 
   const handleSignOut = async () => {
     try {
@@ -171,8 +170,9 @@ function ProfileContent() {
       }))
 
       setSuccess('Profile picture uploaded successfully!')
-    } catch (error: any) {
-      setError(error.message || 'Failed to upload image')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image'
+      setError(errorMessage)
     } finally {
       setUploadingImage(false)
     }
@@ -190,8 +190,9 @@ function ProfileContent() {
       }))
 
       setSuccess('Profile picture removed successfully!')
-    } catch (error: any) {
-      setError(error.message || 'Failed to remove profile picture')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove profile picture'
+      setError(errorMessage)
     } finally {
       setUploadingImage(false)
     }
@@ -206,7 +207,7 @@ function ProfileContent() {
 
     try {
       // Prepare update data - exclude hospital_name for hospital admins
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         name: formData.name,
         age: formData.age,
         sex: formData.sex,
@@ -235,8 +236,9 @@ function ProfileContent() {
       setTimeout(() => {
         window.location.reload()
       }, 1000)
-    } catch (error: any) {
-      setError(error.message || 'Failed to update profile')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -423,9 +425,11 @@ function ProfileContent() {
             <div className="relative group">
               <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600" style={{outline: 'none', border: 'none', boxShadow: 'none'}}>
                 {formData.avatar_url ? (
-                  <img 
+                  <Image 
                     src={formData.avatar_url} 
                     alt="Profile" 
+                    width={128}
+                    height={128}
                     className="w-full h-full object-cover"
                     style={{outline: 'none', border: 'none', boxShadow: 'none'}}
                   />
