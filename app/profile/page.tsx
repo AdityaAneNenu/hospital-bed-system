@@ -108,7 +108,7 @@ function ProfileContent() {
         fetchHospitalName(user.id)
       }
     }
-  }, [profile, user, fetchHospitalName])
+  }, [profile, user])
 
   const handleSignOut = async () => {
     try {
@@ -423,7 +423,7 @@ function ProfileContent() {
           <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-6 sm:space-y-0 sm:space-x-8 mb-8">
             {/* Enhanced Profile Picture Section */}
             <div className="relative group">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600" style={{outline: 'none', border: 'none', boxShadow: 'none'}}>
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600">
                 {formData.avatar_url ? (
                   <Image 
                     src={formData.avatar_url} 
@@ -431,7 +431,6 @@ function ProfileContent() {
                     width={128}
                     height={128}
                     className="w-full h-full object-cover"
-                    style={{outline: 'none', border: 'none', boxShadow: 'none'}}
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
