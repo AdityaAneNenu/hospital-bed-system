@@ -250,14 +250,16 @@ export default function Home() {
                 </svg>
               </Link>
               
-              <Link 
-                href="/auth" 
-                className="group relative border-2 border-white/30 backdrop-blur-md bg-white/10 text-white px-12 py-5 rounded-2xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 flex items-center overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <Users className="h-6 w-6 mr-3 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-300 relative z-10" />
-                <span className="relative z-10">Get Started</span>
-              </Link>
+              {!isAuthenticated && (
+                <Link 
+                  href="/auth" 
+                  className="group relative border-2 border-white/30 backdrop-blur-md bg-white/10 text-white px-12 py-5 rounded-2xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 flex items-center overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <Users className="h-6 w-6 mr-3 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-300 relative z-10" />
+                  <span className="relative z-10">Get Started</span>
+                </Link>
+              )}
             </div>
 
             {/* Feature highlights */}
@@ -577,16 +579,29 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
-            <Link 
-              href="/auth" 
-              className="group relative px-10 py-5 bg-white text-blue-600 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-white/25 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-w-[200px]"
-            >
-              <span className="relative z-10 flex items-center justify-center">
-                Get Started Free
-                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-2 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Link>
+            {!isAuthenticated ? (
+              <Link 
+                href="/auth" 
+                className="group relative px-10 py-5 bg-white text-blue-600 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-white/25 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-w-[200px]"
+              >
+                <span className="relative z-10 flex items-center justify-center">
+                  Get Started Free
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Link>
+            ) : (
+              <Link 
+                href="/dashboard" 
+                className="group relative px-10 py-5 bg-white text-blue-600 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-white/25 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-w-[200px]"
+              >
+                <span className="relative z-10 flex items-center justify-center">
+                  Go to Dashboard
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Link>
+            )}
             
             <Link 
               href="/contact" 
